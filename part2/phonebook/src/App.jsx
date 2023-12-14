@@ -33,17 +33,42 @@ const Persons = ({ persons, handleDelete }) => {
   })
 }
 
+const Notification = ({ message, error }) => {
+  const notificationStyle = {
+    color: error ? 'red' : 'green',
+    background: 'lightgrey',
+    fontSize: 20,
+    borderStyle: 'solid',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+  }
+
+  if (message === null) {
+    return null
+  }
+
+  return (
+    <div style={notificationStyle}>
+      {message}
+    </div>
+  )
+}
 
 const App = () => {
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filterName, setFilterName] = useState('')
+  const [message, setMessage] = useState(null)
+  const [error, setError] = useState(false)
 
   const hook = () => {
     personService
       .getAll()
-      .then(data => setPersons(data))
+      .then(initialPersons => {
+        setPersons(initialPersons)
+      })
   }
   useEffect(hook, [])
 
@@ -60,6 +85,20 @@ const App = () => {
             setPersons(persons.map(p => p.id !== person.id ? p : returnedPerson))
             setNewName('')
             setNewNumber('')
+            setMessage(`Number of ${newName} is changed`)
+            setTimeout(() => {
+              setMessage(null)
+            }, 5000)
+          })
+          .catch(error => {
+            setMessage(
+              `Information of '${person.name}' has already been removed from server`
+            )
+            setError(true)
+            setTimeout(() => {
+              setMessage(null)
+              setError(false)
+            }, 5000)
           })
       }
     } else {
@@ -73,6 +112,10 @@ const App = () => {
           setPersons(persons.concat(returnedPerson))
           setNewName('')
           setNewNumber('')
+          setMessage(`Added ${newName}`)
+          setTimeout(() => {
+            setMessage(null)
+          }, 5000)
         })
     }
   }
@@ -97,6 +140,16 @@ const App = () => {
         .then(() =>
           setPersons(persons.filter(p => p.id !== id))
         )
+        .catch(error => {
+          setMessage(
+            `Information of '${person.name}' has already been removed from server`
+          )
+          setError(true)
+          setTimeout(() => {
+            setMessage(null)
+            setError(false)
+          }, 5000)
+        })
     }
   }
 
@@ -108,6 +161,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message} error={error} />
       <Filter handleChange={handleFilterChange} value={filterName} />
       <h3>Add a new</h3>
       <PersonForm handleSubmit={addPerson} handleNameChange={handleNameChange} handleNumberChange={handleNumberChange} valueName={newName} valueNumber={newNumber} />
